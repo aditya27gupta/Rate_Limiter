@@ -1,12 +1,15 @@
 from collections.abc import Callable
+from typing import Annotated
 
 import uvicorn
-from fastapi import FastAPI, Request, Response, status
+from fastapi import FastAPI, Header, Request, Response, status
 
-from base_model import Notes
+from base_model import CreateNote
+from db import DB
 from rate_limiter import rate_limit
 
 app = FastAPI()
+db_object = DB()
 
 
 @app.middleware("http")
@@ -28,19 +31,39 @@ def read_root() -> dict:
     return {"Hello": "World"}
 
 
-@app.get("/notes", status_code=status.HTTP_200_OK)
-def get_notes(notes: Notes) -> dict:
-    return {"note": "abc"}
+@app.get("/notes/")
+def get_notes(user_token: Annotated[str, Header()]) -> Response:
+    note = db_object.get_note(user_token)
+    if note:
+        status_code = status.HTTP_200_OK
+    else:
+        note = "No Note Found"
+        status_code = status.HTTP_200_OK
+    return Response(content=note, status_code=status_code)
 
 
-@app.post("/notes", status_code=status.HTTP_201_CREATED)
-def create_notes(notes: Notes) -> bool:
-    return True
+@app.post("/notes")
+def create_notes(notes: CreateNote, user_token: Annotated[str, Header()]) -> Response:
+    check = db_object.create_note(token=user_token, user_note=notes.user_note)
+    if check:
+        content = "Note Created"
+        status_code = status.HTTP_201_CREATED
+    else:
+        content = "Note Creation Failed"
+        status_code = status.HTTP_400_BAD_REQUEST
+    return Response(content=content, status_code=status_code)
 
 
-@app.delete("/notes", status_code=status.HTTP_202_ACCEPTED)
-def delete_notes(notes: Notes) -> None:
-    pass
+@app.delete("/notes/{note_id}")
+def delete_notes(note_id: int, user_token: Annotated[str, Header()]) -> Response:
+    check = db_object.delete_note(token=user_token, note_id=note_id)
+    if check:
+        content = "Note Deleted"
+        status_code = status.HTTP_202_ACCEPTED
+    else:
+        content = "Note not found"
+        status_code = status.HTTP_204_NO_CONTENT
+    return Response(content=content, status_code=status_code)
 
 
 if __name__ == "__main__":
