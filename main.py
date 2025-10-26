@@ -67,4 +67,4 @@ def delete_notes(note_id: int, user_token: Annotated[str, Header()]) -> Response
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=9999, reload=True)
+    uvicorn.run(app=app, host="127.0.0.1", port=9999)
