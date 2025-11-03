@@ -1,10 +1,8 @@
 FROM python:3.13-alpine
-RUN addgroup -g 1001 appgroup && \
-    adduser -D -u 1001 -G appgroup -h /app appuser
-USER appuser
-COPY --from=ghcr.io/astral-sh/uv:0.9.7 /uv /uvx /bin/
 WORKDIR /app
+ENV UV_SYSTEM_PYTHON=1
 COPY pyproject.toml uv.lock* ./
-RUN uv sync --frozen --no-dev
+RUN --mount=from=ghcr.io/astral-sh/uv,source=/uv,target=/bin/uv \
+    uv --no-cache pip install -r pyproject.toml
 COPY . .
-CMD ["uv", "run", "main.py"]
+CMD ["python", "main.py"]

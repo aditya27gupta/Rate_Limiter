@@ -38,7 +38,7 @@ def get_notes(user_token: Annotated[str, Header()]) -> Response:
         status_code = status.HTTP_200_OK
     else:
         note = "No Note Found"
-        status_code = status.HTTP_200_OK
+        status_code = status.HTTP_204_NO_CONTENT
     return Response(content=note, status_code=status_code)
 
 
@@ -67,4 +67,6 @@ def delete_notes(note_id: int, user_token: Annotated[str, Header()]) -> Response
 
 
 if __name__ == "__main__":
-    uvicorn.run(app=app, host="0.0.0.0", port=9999)
+    config = uvicorn.Config(app=app, host="0.0.0.0", port=9999, log_level="info")
+    server = uvicorn.Server(config=config)
+    server.run()
